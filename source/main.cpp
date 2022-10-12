@@ -1,5 +1,7 @@
 #include "framework/engine.h"
 #include "framework/utils.h"
+#define GLM_ENABLE_EXPERIMENTAL
+#include "glm/gtx/spline.hpp"
 
 using namespace std;
 using namespace glm;
@@ -10,6 +12,20 @@ using namespace glm;
 * y - up
 * z - backward
 */
+
+vec3 get_spline_point(const std::vector<vec3>& points, float t)
+{
+	// indices of the relevant control points
+	int i0 = clamp<int>(t - 1, 0, points.size() - 1);
+	int i1 = clamp<int>(t, 0, points.size() - 1);
+	int i2 = clamp<int>(t + 1, 0, points.size() - 1);
+	int i3 = clamp<int>(t + 2, 0, points.size() - 1);
+
+	// parameter on the local curve interval
+	float local_t = fract(t);
+
+	return catmullRom(points[i0], points[i1], points[i2], points[i3], local_t);
+}
 
 int main()
 {
@@ -56,6 +72,21 @@ int main()
 		points.push_back(sphere);
 	}
 	LineDrawer path_drawer(path, points.size(), true);
+
+	vector<vec3> path_v(path, path + std::size(path));
+	vector<vec3> spline_points;
+	for (auto i = 0.f; i < 100; i++)
+	{
+		spline_points.emplace_back(get_spline_point(path_v, i));
+	}
+
+	// test cube
+	auto cube_mesh = createCube();
+	Object* cube = engine->createObject(&cube_mesh);
+	cube->setColor(0.5f, 0.2f, 0.2f);
+	cube->setPosition(0, 0.5f, 0);
+	cube->setRotation(-90.0f, 0.0f, 0.0f);
+	cube->setScale(1.f);
 
 	// main loop
 	while (!engine->isDone())

@@ -75,6 +75,9 @@
     <ClCompile Include="source\framework\utils.cpp">
       <Filter>source\framework</Filter>
     </ClCompile>
+    <ClCompile Include="catmull_rom.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="data\shader.frag">
@@ -1239,6 +1242,9 @@
     </ClInclude>
     <ClInclude Include="source\framework\utils.h">
       <Filter>source\framework</Filter>
+    </ClInclude>
+    <ClInclude Include="catmull_rom.h">
+      <Filter>source</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -1,7 +1,6 @@
 #include "framework/engine.h"
 #include "framework/utils.h"
-#define GLM_ENABLE_EXPERIMENTAL
-#include "glm/gtx/spline.hpp"
+#include "../catmull_rom.h"
 
 using namespace std;
 using namespace glm;
@@ -13,19 +12,9 @@ using namespace glm;
 * z - backward
 */
 
-vec3 get_spline_point(const std::vector<vec3>& points, float t)
-{
-	// indices of the relevant control points
-	int i0 = clamp<int>(t - 1, 0, points.size() - 1);
-	int i1 = clamp<int>(t, 0, points.size() - 1);
-	int i2 = clamp<int>(t + 1, 0, points.size() - 1);
-	int i3 = clamp<int>(t + 2, 0, points.size() - 1);
 
-	// parameter on the local curve interval
-	float local_t = fract(t);
 
-	return catmullRom(points[i0], points[i1], points[i2], points[i3], local_t);
-}
+// ============================================================
 
 int main()
 {
@@ -73,12 +62,27 @@ int main()
 	}
 	LineDrawer path_drawer(path, points.size(), true);
 
-	vector<vec3> path_v(path, path + std::size(path));
-	vector<vec3> spline_points;
-	for (auto i = 0.f; i < 100; i++)
+	// ========================================================
+
+	vector<vec3> path_v;
+	for (size_t i = 0; i < std::size(path); i += 3)
 	{
-		spline_points.emplace_back(get_spline_point(path_v, i));
+		vec3 v(path[i], path[i + 1], path[i + 2]);
+		path_v.emplace_back(v);
 	}
+
+	vector<vec3> spline_points = catmull_rom::calculate(path_v, 0.5f, 10);
+	size_t spline_points_limit = spline_points.size();
+	vector<Object*> points2;
+	for (auto& spline_point : spline_points)
+	{
+		Object* sphere = engine->createObject(&sphere_mesh);
+		sphere->setColor(0, 0, 1);
+		sphere->setPosition(spline_point);
+		sphere->setScale(0.1f);
+		points2.push_back(sphere);
+	}
+	LineDrawer path_drawer2(spline_points, true);
 
 	// test cube
 	auto cube_mesh = createCube();
@@ -88,13 +92,40 @@ int main()
 	cube->setRotation(-90.0f, 0.0f, 0.0f);
 	cube->setScale(1.f);
 
+	/// class points holder
+	///	get point between 0 to 1
+	
+	/// class time map
+
+	/// new cube rotation
+	// get current position
+	// get new position by deltatime
+	// calc angle between positions
+	// set new position
+	// set new rotation
+
+	auto path_t = 0.f;
+	auto speed = 0.1f;
+
 	// main loop
 	while (!engine->isDone())
 	{
+		auto delta_time = engine->getDeltaTime();
+		path_t += delta_time * speed;
+		if (path_t > 1)
+		{
+			path_t -= 1;
+		}
+		auto index2 = clamp<size_t>(path_t * spline_points_limit, 0, spline_points_limit - 1);
+		auto current_point = spline_points[index2];
+		cube->setPosition(current_point);
+		cout << path_t << " : " << index2 << " : " << current_point.x << " " << current_point.y << " " << current_point.z << endl;
+
 		engine->update();
 		engine->render();
 
 		path_drawer.draw();
+		path_drawer2.draw();
 		
 		engine->swap();
 	}

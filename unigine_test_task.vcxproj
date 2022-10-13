@@ -92,9 +92,9 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="catmull_rom.cpp" />
     <ClCompile Include="include\glm\detail\glm.cpp" />
     <ClCompile Include="source/main.cpp" />
+    <ClCompile Include="source\catmull_rom.cpp" />
     <ClCompile Include="source\framework\camera.cpp" />
     <ClCompile Include="source\framework\engine.cpp" />
     <ClCompile Include="source\framework\filesystem.cpp" />
@@ -240,7 +240,6 @@
     <None Include="include\glm\gtx\wrap.inl" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="catmull_rom.h" />
     <ClInclude Include="include\glad\glad.h" />
     <ClInclude Include="include\GLFW\glfw3.h" />
     <ClInclude Include="include\GLFW\glfw3native.h" />
@@ -488,6 +487,7 @@
     <ClInclude Include="include\GL\glxew.h" />
     <ClInclude Include="include\GL\wglew.h" />
     <ClInclude Include="include\KHR\khrplatform.h" />
+    <ClInclude Include="source\catmull_rom.h" />
     <ClInclude Include="source\framework\camera.h" />
     <ClInclude Include="source\framework\engine.h" />
     <ClInclude Include="source\framework\filesystem.h" />

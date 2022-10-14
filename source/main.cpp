@@ -16,7 +16,7 @@ using namespace glm;
 
 class points_holder
 {
-	vector<vec3> spline_points;
+	vector<vec3> spline_points_;
 
 	static float get_distance(const vec3& v1, const vec3& v2) {
 		const auto dx = v1.x - v2.x;
@@ -36,24 +36,24 @@ public:
 
 		const vector<vec3> all_spline_points = catmull_rom::calculate(path_v, 0.5f, 500);
 
-		spline_points.clear();
+		spline_points_.clear();
 		for(auto point : all_spline_points)
 		{
-			if (!spline_points.empty() && get_distance(point, spline_points[spline_points.size() - 1]) < min_distance)
+			if (!spline_points_.empty() && get_distance(point, spline_points_[spline_points_.size() - 1]) < min_distance)
 			{
 				continue;
 			}
-			spline_points.emplace_back(point);
+			spline_points_.emplace_back(point);
 		}
 
-		return spline_points;
+		return spline_points_;
 	}
 
 	///	Get a path point in the range from 0 to 1
 	vec3 get_point_at(const float alpha) const
 	{
-		const auto index = clamp<size_t>(alpha * spline_points.size(), 0, spline_points.size() - 1);
-		return spline_points[index];
+		const auto index = clamp<size_t>(alpha * spline_points_.size(), 0, spline_points_.size() - 1);
+		return spline_points_[index];
 	}
 };
 
@@ -62,14 +62,51 @@ inline float get_angle(const vec3 v1, const vec3 v2)
 	return atan2(v2.z - v1.z, v2.x - v1.x) * 180.f / pi<float>();
 }
 
-void update_cube(Object* cube, const vec3 new_point)
+class train
 {
-	const auto old_point = cube->getPosition();
-	const auto old_angle = cube->getRotation();
-	const auto angle = get_angle(old_point, new_point);
-	cube->setPosition(new_point);
-	cube->setRotation(old_angle.x, 180 - angle, old_angle.z);
-}
+	vector<Object*> cubes_;
+	size_t train_length_ = 8;
+	float cube_speed_ = 0.1f;
+	float cube_shift_ = 0.025f;
+	float path_time_ = 0.f;
+	points_holder* holder_ = nullptr;
+	
+public:
+	void init(points_holder* holder, Mesh& cube_mesh)
+	{
+		holder_ = holder;
+		const auto engine = Engine::get();
+
+		for (size_t i = 0; i < train_length_; i++)
+		{
+			auto cube = engine->createObject(&cube_mesh);
+			cube->setColor(0.5f, 0.2f, 0.2f);
+			cubes_.push_back(cube);
+		}
+	}
+
+	void update(const float delta_time)
+	{
+		path_time_ += delta_time * cube_speed_;
+
+		for (size_t i = 0; i < cubes_.size(); i++)
+		{
+			auto cube_path_time = path_time_ + i * cube_shift_;
+			if (cube_path_time > 1)
+			{
+				cube_path_time -= 1;
+			}
+			const auto new_point = holder_->get_point_at(cube_path_time);
+
+			const auto old_point = cubes_[i]->getPosition();
+			cubes_[i]->setPosition(new_point);
+
+			const auto old_angle = cubes_[i]->getRotation();
+			const auto angle = get_angle(old_point, new_point);
+			cubes_[i]->setRotation(old_angle.x, 180 - angle, old_angle.z);
+		}
+	}
+};
 
 // ============================================================
 
@@ -121,17 +158,8 @@ int main()
 
 	// ========================================================
 
-	auto holder = points_holder();
-	auto spline_points = holder.create_spline_points(path, std::size(path), 0.01f);
-	// init
-
-	// test cube
-	auto cube_mesh = createCube();
-	Object* cube = engine->createObject(&cube_mesh);
-	cube->setColor(0.5f, 0.2f, 0.2f);
-	cube->setPosition(0, 0.5f, 0);
-	cube->setRotation(-90.0f, 0.0f, 0.0f);
-	cube->setScale(1.f);
+	auto holder = new points_holder();
+	auto spline_points = holder->create_spline_points(path, std::size(path), 0.01f);
 
 	// path drawing
 	vector<Object*> points2;
@@ -145,23 +173,15 @@ int main()
 	}
 	LineDrawer path_drawer2(spline_points, true);
 
-	auto path_t = 0.f;
-	const auto cube_speed = 0.05f;
+	auto t = new train();
+	auto cube_mesh = createCube();
+	t->init(holder, cube_mesh);
 
 	// main loop
 	while (!engine->isDone())
 	{
-		auto delta_time = engine->getDeltaTime();
-		path_t += delta_time * cube_speed;
-		if (path_t > 1)
-		{
-			path_t -= 1;
-		}
-
-		auto new_point = holder.get_point_at(path_t);
-		update_cube(cube, new_point);
-
 		engine->update();
+		t->update(engine->getDeltaTime());
 		engine->render();
 
 		path_drawer.draw();

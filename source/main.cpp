@@ -57,13 +57,19 @@ public:
 	}
 };
 
-inline float get_angle(vec3 v1, vec3 v2)
+inline float get_angle(const vec3 v1, const vec3 v2)
 {
-	// todo: PI
-	return atan2(v2.z - v1.z, v2.x - v1.x) * 180.f / 3.14f;
+	return atan2(v2.z - v1.z, v2.x - v1.x) * 180.f / pi<float>();
 }
 
-/// class time map
+void update_cube(Object* cube, const vec3 new_point)
+{
+	const auto old_point = cube->getPosition();
+	const auto old_angle = cube->getRotation();
+	const auto angle = get_angle(old_point, new_point);
+	cube->setPosition(new_point);
+	cube->setRotation(old_angle.x, 180 - angle, old_angle.z);
+}
 
 // ============================================================
 
@@ -139,32 +145,21 @@ int main()
 	}
 	LineDrawer path_drawer2(spline_points, true);
 
-	/// new cube rotation
-	// get current position
-	// get new position by deltatime
-	// calc angle between positions
-	// set new position
-	// set new rotation
-
 	auto path_t = 0.f;
-	auto speed = 0.05f;
+	const auto cube_speed = 0.05f;
 
 	// main loop
 	while (!engine->isDone())
 	{
 		auto delta_time = engine->getDeltaTime();
-		path_t += delta_time * speed;
+		path_t += delta_time * cube_speed;
 		if (path_t > 1)
 		{
 			path_t -= 1;
 		}
-		auto old_point = cube->getPosition();
+
 		auto new_point = holder.get_point_at(path_t);
-		auto angle = get_angle(old_point, new_point);
-		cout << "angle: " << angle << endl;
-		cube->setPosition(new_point);
-		//cube->setRotation(angle);
-		//cout << path_t << " : " << index2 << " : " << current_point.x << " " << current_point.y << " " << current_point.z << endl;
+		update_cube(cube, new_point);
 
 		engine->update();
 		engine->render();

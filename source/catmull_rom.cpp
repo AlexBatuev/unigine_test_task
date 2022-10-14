@@ -64,7 +64,7 @@ vector<vec3> catmull_rom::calculate(const vector<vec3>& points, const float tens
 	const auto vectors = build_vectors(points, need_closed_curve);
 	vector<vec3> result;
 
-	for (auto i = 1; i < vectors.size() - 2; ++i)
+	for (size_t i = 1; i < vectors.size() - 2; ++i)
 	{
 		auto spline = calculate_spline(tension, n, vectors[i - 1], vectors[i], vectors[i + 1], vectors[i + 2]);
 		result.insert(result.end(), spline.begin(), spline.end());

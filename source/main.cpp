@@ -34,7 +34,7 @@ public:
 			path_v.emplace_back(vec3 (path[i], path[i + 1], path[i + 2]));
 		}
 
-		const vector<vec3> all_spline_points = catmull_rom::calculate(path_v, 0.5f, 500);
+		const vector<vec3> all_spline_points = catmull_rom::calculate(path_v, 0.5f, 5000);
 
 		spline_points_.clear();
 		for(auto point : all_spline_points)
@@ -45,6 +45,8 @@ public:
 			}
 			spline_points_.emplace_back(point);
 		}
+
+		cout << "all: " << all_spline_points.size() << ", filtered: " << spline_points_.size() << endl;
 
 		return spline_points_;
 	}
@@ -66,8 +68,8 @@ class train
 {
 	vector<Object*> cubes_;
 	size_t train_length_ = 8;
-	float cube_speed_ = 0.1f;
-	float cube_shift_ = 0.025f;
+	float cube_speed_ = 0.25f;
+	float cube_shift_ = 0.0235f;
 	float path_time_ = 0.f;
 	points_holder* holder_ = nullptr;
 	
@@ -81,6 +83,7 @@ public:
 		{
 			auto cube = engine->createObject(&cube_mesh);
 			cube->setColor(0.5f, 0.2f, 0.2f);
+			cube->setScale(1, 0.75, 1);
 			cubes_.push_back(cube);
 		}
 	}
@@ -88,6 +91,10 @@ public:
 	void update(const float delta_time)
 	{
 		path_time_ += delta_time * cube_speed_;
+		if (path_time_ > 1)
+		{
+			path_time_ -= 1;
+		}
 
 		for (size_t i = 0; i < cubes_.size(); i++)
 		{
